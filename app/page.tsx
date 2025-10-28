@@ -1,12 +1,12 @@
 import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
+const SwitchAccountButton = dynamic(() => import('@/components/auth/switch_account_button'))
 
 export default async function HomePage() {
   const supabase = await createClient()
   const { data: { session } } = await supabase.auth.getSession()
-
-  console.log('sess', session)
 
   if (session) {
     return (
@@ -26,11 +26,7 @@ export default async function HomePage() {
                   Go to Dashboard
                 </Button>
               </Link>
-              <Link href="/auth/signin">
-                <Button variant="outline" size="lg" className="px-8">
-                  Switch Account
-                </Button>
-              </Link>
+              <SwitchAccountButton />
             </div>
           </div>
           
@@ -82,7 +78,7 @@ export default async function HomePage() {
             Create workspaces, share knowledge, and work together seamlessly.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/auth/signin">
+            <Link href="/auth/signup">
               <Button size="lg" className="px-8">
                 Get Started
               </Button>
@@ -92,6 +88,15 @@ export default async function HomePage() {
                 Sign In
               </Button>
             </Link>
+          </div>
+
+          {/* Improved CTA helper text */}
+          <div className="mt-4 flex justify-center">
+            <p className="mx-auto max-w-md text-center text-sm text-gray-600 flex items-center gap-2">
+              <span>
+                Create your first workspace in less than a minute — add members and start collaborating instantly.
+              </span>
+            </p>
           </div>
         </div>
         

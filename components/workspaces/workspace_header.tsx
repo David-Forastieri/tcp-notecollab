@@ -38,9 +38,6 @@ export function WorkspaceHeader({ workspace, userRole }: WorkspaceHeaderProps) {
           {canManageMembers && (
             <InviteMemberDialog workspaceId={workspace.id} />
           )}
-          {userRole === 'owner' && (
-            <DeleteWorkspaceButton workspaceId={workspace.id} />
-          )}
         </div>
       </div>
       
@@ -49,6 +46,17 @@ export function WorkspaceHeader({ workspace, userRole }: WorkspaceHeaderProps) {
         <span>•</span>
         <span>Your role: <span className="capitalize font-medium">{userRole}</span></span>
       </div>
+
+      {/* Bottom-left delete workspace button (owners only) */}
+      {userRole === 'owner' && (
+        <div className="mt-6">
+          <div className="flex">
+            <div className="ml-0">
+              <DeleteWorkspaceButton workspaceId={workspace.id} />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

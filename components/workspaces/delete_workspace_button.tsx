@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { Trash } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
@@ -39,7 +40,12 @@ export default function DeleteWorkspaceButton({ workspaceId }: DeleteWorkspaceBu
   }
 
   return (
-    <Button variant="destructive" size="sm" onClick={handleDelete} disabled={isLoading}>
+    <Button
+      onClick={handleDelete}
+      disabled={isLoading}
+      className="bg-white text-red-600 hover:bg-red-600 hover:text-white transition-colors text-sm px-3 py-1 rounded"
+    >
+      <Trash className="h-4 w-4 mr-2" />
       Delete Workspace
     </Button>
   )
