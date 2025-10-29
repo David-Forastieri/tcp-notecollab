@@ -43,30 +43,6 @@ export function SignInForm() {
     }
   }
 
- /*  const handleSignUp = async () => {
-    setIsLoading(true)
-
-    try {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-      })
-
-      if (error) {
-        toast.error('Error signing up', {
-          description: error.message,
-        })
-        return
-      }
-
-      toast.success('Check your email for verification link!')
-    } catch (error) {
-      toast.error('An unexpected error occurred')
-    } finally {
-      setIsLoading(false)
-    }
-  } */
-
   return (
     <Card>
       <CardHeader>
@@ -99,7 +75,7 @@ export function SignInForm() {
             />
           </div>
           <div className="flex gap-2">
-            <Button type="submit" className="flex-1" disabled={isLoading}>
+            <Button type="submit" className="flex-1" isLoading={isLoading}>
               {isLoading ? 'Signing in...' : 'Sign In'}
             </Button>
           </div>

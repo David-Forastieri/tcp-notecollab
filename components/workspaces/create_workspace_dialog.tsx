@@ -140,8 +140,8 @@ export function CreateWorkspaceDialog() {
             </div>
           </div>
           <DialogFooter>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? 'Creating...' : 'Create Workspace'}
+            <Button type="submit" isLoading={isLoading}>
+              Create Workspace
             </Button>
           </DialogFooter>
         </form>

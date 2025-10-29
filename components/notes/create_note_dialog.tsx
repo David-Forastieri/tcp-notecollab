@@ -70,7 +70,7 @@ export function CreateNoteDialog({ workspaceId }: CreateNoteDialogProps) {
       setContent('')
       setIsShared(false)
       router.refresh()
-    } catch (error) {
+    } catch {
       toast.error('An unexpected error occurred')
     } finally {
       setIsLoading(false)
@@ -122,8 +122,8 @@ export function CreateNoteDialog({ workspaceId }: CreateNoteDialogProps) {
             </div>
           </div>
           <DialogFooter>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? 'Creating...' : 'Create Note'}
+            <Button type="submit" isLoading={isLoading}>
+              Create Note
             </Button>
           </DialogFooter>
         </form>

@@ -115,9 +115,9 @@ export function SignUpForm() {
           <Button
             type="submit"
             className="w-full"
-            disabled={isLoading}
+            isLoading={isLoading}
           >
-            {isLoading ? 'Sign Up...' : 'Sign Up'}
+            Sign Up
           </Button>
         </form>
       </CardContent>

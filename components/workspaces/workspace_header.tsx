@@ -47,7 +47,6 @@ export function WorkspaceHeader({ workspace, userRole }: WorkspaceHeaderProps) {
         <span>Your role: <span className="capitalize font-medium">{userRole}</span></span>
       </div>
 
-      {/* Bottom-left delete workspace button (owners only) */}
       {userRole === 'owner' && (
         <div className="mt-6">
           <div className="flex">

@@ -280,7 +280,7 @@ export function ShareNoteDialog({ note }: { note: Note }) {
               )}
             </div>
 
-            {availableMembers.length > 0 && (
+           {/*  {availableMembers.length > 0 && (
               <div className="grid gap-2">
                 <Label htmlFor="permission">Permission Level</Label>
                 <Select value={permission} onValueChange={setPermission}>
@@ -293,14 +293,15 @@ export function ShareNoteDialog({ note }: { note: Note }) {
                   </SelectContent>
                 </Select>
               </div>
-            )}
+            )} */}
 
             <DialogFooter>
               <Button 
                 type="submit" 
-                disabled={isLoading || !selectedMember}
+                disabled={!selectedMember}
+                isLoading={isLoading}
               >
-                {isLoading ? 'Sharing...' : 'Share Note'}
+                Share Note
               </Button>
             </DialogFooter>
           </form>

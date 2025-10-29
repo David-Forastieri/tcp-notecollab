@@ -66,7 +66,7 @@ export function EditNoteDialog({ note }: EditNoteDialogProps) {
       toast.success('Note updated successfully!')
       setOpen(false)
       router.refresh()
-    } catch (error) {
+    } catch {
       toast.error('An unexpected error occurred')
     } finally {
       setIsLoading(false)
@@ -118,8 +118,8 @@ export function EditNoteDialog({ note }: EditNoteDialogProps) {
             </div>
           </div>
           <DialogFooter>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? 'Updating...' : 'Update Note'}
+            <Button type="submit" isLoading={isLoading}>
+              Update Note
             </Button>
           </DialogFooter>
         </form>
