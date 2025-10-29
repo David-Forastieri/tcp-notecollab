@@ -41,8 +41,6 @@ export async function NotesSection({ workspaceId, userRole }: NotesSectionProps)
   if (error) {
     console.error('Error fetching notes:', error)
   }
-
-  console.log('📝 Notas encontradas:', notes)
   
   // FILTROS SEGÚN ROL DEL USUARIO
   let userNotes: UINote[] = []
@@ -59,12 +57,6 @@ export async function NotesSection({ workspaceId, userRole }: NotesSectionProps)
     sharedNotes = notes?.filter(note => 
       note.note_shares?.some((share: NoteShare) => share.shared_with_user_id === user.id)
     ) || []
-
-    console.log('🔧 Filtro OWNER/ADMIN:', {
-      userNotes: userNotes.length,
-      teamNotes: teamNotes.length,
-      sharedNotes: sharedNotes.length
-    })
 
   } else {
     // MEMBER: Solo puede ver sus notas + las compartidas específicamente con él

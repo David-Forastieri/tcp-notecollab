@@ -63,10 +63,12 @@ function Button({
   disabled={isLoading || props.disabled}
       {...props}
     >
-      {isLoading && (
-        <LoadingSpinner size={spinnerSize} className="mr-2" />
-      )}
-      {children}
+      <>
+        {isLoading && 
+          <LoadingSpinner size={spinnerSize} className="mr-2" />
+        }
+        {children}
+      </>
     </Comp>
   )
 }
