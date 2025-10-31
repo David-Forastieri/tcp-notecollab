@@ -322,25 +322,6 @@ Confirma que npm run dev esté corriendo
 
 Revisa la consola del navegador para errores específicos
 
-📁 Estructura del Proyecto
-text
-tu-proyecto/
-├── supabase/
-│   ├── migrations/          # Migraciones de base de datos
-│   │   ├── 001_initial.sql
-│   │   └── 002_rls_policies.sql
-│   └── config.toml         # Configuración de Supabase
-├── app/                    # Next.js App Router
-│   ├── dashboard/
-│   ├── auth/
-│   └── layout.tsx
-├── components/             # Componentes React
-│   ├── ui/                 # Componentes de UI
-│   └── workspaces/         # Lógica de workspaces
-├── lib/
-│   └── supabase/           # Cliente y utilidades
-└── .env.local              # Variables de entorno
-
 🔄 Flujo de Desarrollo
 Para Agregar Nuevas Funcionalidades:
 Crear migración: supabase migration create nueva_funcionalidad
@@ -375,8 +356,8 @@ Actualizar variables de entorno con URLs de producción
 
 Desplegar en Vercel/Netlify
 
-📞 Soporte y Troubleshooting
-Recursos Útiles:
+📞 Recursos Útiles:
+
 Supabase Studio Local: http://localhost:54323
 
 Email Testing (Inbucket): http://localhost:54324
