@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -22,7 +21,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { createClient } from '@/lib/supabase/client'
-import { toast } from 'sonner'
+import { useInviteMember } from '@/lib/hooks/use-workspaces'
 
 interface InviteMemberDialogProps {
   workspaceId: string
@@ -31,11 +30,10 @@ interface InviteMemberDialogProps {
 export function InviteMemberDialog({ workspaceId }: InviteMemberDialogProps) {
   const [open, setOpen] = useState(false)
   const [email, setEmail] = useState('')
-  const [role, setRole] = useState('member')
-  const [isLoading, setIsLoading] = useState(false)
+  const [role, setRole] = useState<'member' | 'admin'>('member')
   const [currentUserRole, setCurrentUserRole] = useState<'owner' | 'admin' | 'member' | null>(null)
-  const router = useRouter()
   const supabase = createClient()
+  const { inviteMember, isLoading } = useInviteMember()
 
   // Obtener el rol del usuario actual en este workspace
   useEffect(() => {
@@ -66,66 +64,17 @@ export function InviteMemberDialog({ workspaceId }: InviteMemberDialogProps) {
     }
 
     getCurrentUserRole()
-  }, [open, workspaceId])
+  }, [open, workspaceId, supabase])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setIsLoading(true)
+    
+    const result = await inviteMember({ workspaceId, email, role })
 
-    try {
-      // Lookup profile by email via RPC to avoid RLS blocking the query
-      const { data: rpcData, error: rpcError } = await supabase.rpc('get_profile_by_email', { p_email: email })
-
-      if (rpcError) {
-        toast.error('Error checking user', {
-          description: rpcError.message,
-        })
-        return
-      }
-
-      const userData = Array.isArray(rpcData) ? rpcData[0] : rpcData
-
-      // Do not allow pending invites: the user must exist to be invited.
-      if (!userData || !userData.id) {
-        toast.error('User does not exist. They must register before you can invite them.')
-        return
-      }
-
-      // Insert workspace member for existing user
-      const { error: memberError } = await supabase
-        .from('workspace_members')
-        .insert([
-          {
-            workspace_id: workspaceId,
-            user_id: userData.id,
-            role,
-            invited_email: email,
-            status: 'active',
-          },
-        ])
-
-      if (memberError) {
-        // Unique violation (already a member) or other DB error
-        const msg = memberError.message || 'Error inviting member'
-        if (memberError.code === '23505' || /duplicate key/i.test(msg)) {
-          toast.error('User is already a member of this workspace')
-        } else {
-          toast.error('Error inviting member', {
-            description: msg,
-          })
-        }
-        return
-      }
-
-      toast.success('Member invited successfully!')
+    if (result.success) {
       setOpen(false)
       setEmail('')
       setRole('member')
-      router.refresh()
-    } catch {
-      toast.error('An unexpected error occurred')
-    } finally {
-      setIsLoading(false)
     }
   }
 
@@ -159,7 +108,7 @@ export function InviteMemberDialog({ workspaceId }: InviteMemberDialogProps) {
             </div>
             <div className="grid gap-2">
               <Label htmlFor="role">Role</Label>
-              <Select value={role} onValueChange={setRole}>
+              <Select value={role} onValueChange={(value) => setRole(value as 'member' | 'admin')}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>

@@ -1,48 +1,22 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { createClient } from '@/lib/supabase/client'
-import { toast } from 'sonner'
 import { Eye, EyeOff } from 'lucide-react'
+import { useSignIn } from '@/lib/hooks/use-auth'
 
 export function SignInForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
-  const router = useRouter()
-  const supabase = createClient()
+  const { signIn, isLoading } = useSignIn()
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
-    setIsLoading(true)
-
-    try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
-
-      if (error) {
-        toast.error('Error signing in', {
-          description: error.message,
-        })
-        return
-      }
-
-      toast.success('Successfully signed in!')
-      router.push('/dashboard')
-      router.refresh()
-    } catch (error) {
-      toast.error('An unexpected error occurred')
-    } finally {
-      setIsLoading(false)
-    }
+    await signIn({ email, password })
   }
 
   return (

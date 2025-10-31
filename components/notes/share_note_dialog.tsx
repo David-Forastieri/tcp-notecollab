@@ -1,7 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -24,6 +23,7 @@ import { Badge } from '@/components/ui/badge'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { InviteMemberDialog } from '@/components/workspaces/invite_member_dialog'
+import { useShareNote } from '@/lib/hooks/use-notes'
 
 interface Note {
   id: string
@@ -53,143 +53,92 @@ export function ShareNoteDialog({ note }: { note: Note }) {
   const [members, setMembers] = useState<WorkspaceMember[]>([])
   const [selectedMember, setSelectedMember] = useState('')
   const [permission, setPermission] = useState('view')
-  const [isLoading, setIsLoading] = useState(false)
   const [currentShares, setCurrentShares] = useState(note.note_shares || [])
-  const router = useRouter()
   const supabase = createClient()
-
-  // loadWorkspaceMembers is stable in this component; disable exhaustive-deps warning
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const loadWorkspaceMembers = useCallback(async () => {
-    try {
-      const { data: membersData, error } = await supabase
-        .from('workspace_members')
-        .select(`
-          id,
-          user_id,
-          role,
-          profiles:user_id (
-            id,
-            email,
-            full_name
-          )
-        `)
-        .eq('workspace_id', note.workspace_id)
-        .eq('status', 'active')
-
-      if (error) {
-        toast.error('Error loading members')
-        return
-      }
-
-      const raw = (membersData || []) as unknown as Array<Record<string, unknown>>
-
-      const normalizedMembers = raw.map((m) => {
-        const profilesField = m['profiles'] as unknown
-        const profileObj = Array.isArray(profilesField)
-          ? (profilesField as Array<Record<string, unknown>>)[0]
-          : (profilesField as Record<string, unknown> | undefined)
-
-        return {
-          id: String(m['id'] ?? ''),
-          user_id: String(m['user_id'] ?? ''),
-          role: String(m['role'] ?? ''),
-          profiles: {
-            id: String(profileObj?.['id'] ?? ''),
-            email: String(profileObj?.['email'] ?? ''),
-            full_name: (profileObj?.['full_name'] as string) ?? null,
-          },
-        }
-      }) as WorkspaceMember[]
-
-      setMembers(normalizedMembers)
-    } catch {
-      toast.error('Error loading workspace members')
-    }
-  }, [supabase, note.workspace_id])
+  const { shareNote, removeShare, isLoading } = useShareNote()
 
   useEffect(() => {
-    if (open) {
-      loadWorkspaceMembers()
+    const loadWorkspaceMembers = async () => {
+      if (!open) return
+      
+      try {
+        const { data: membersData, error } = await supabase
+          .from('workspace_members')
+          .select(`
+            id,
+            user_id,
+            role,
+            profiles:user_id (
+              id,
+              email,
+              full_name
+            )
+          `)
+          .eq('workspace_id', note.workspace_id)
+          .eq('status', 'active')
+
+        if (error) {
+          toast.error('Error loading members')
+          return
+        }
+
+        const raw = (membersData || []) as unknown as Array<Record<string, unknown>>
+
+        const normalizedMembers = raw.map((m) => {
+          const profilesField = m['profiles'] as unknown
+          const profileObj = Array.isArray(profilesField)
+            ? (profilesField as Array<Record<string, unknown>>)[0]
+            : (profilesField as Record<string, unknown> | undefined)
+
+          return {
+            id: String(m['id'] ?? ''),
+            user_id: String(m['user_id'] ?? ''),
+            role: String(m['role'] ?? ''),
+            profiles: {
+              id: String(profileObj?.['id'] ?? ''),
+              email: String(profileObj?.['email'] ?? ''),
+              full_name: (profileObj?.['full_name'] as string) ?? null,
+            },
+          }
+        }) as WorkspaceMember[]
+
+        setMembers(normalizedMembers)
+      } catch {
+        toast.error('Error loading workspace members')
+      }
     }
-  }, [open, loadWorkspaceMembers])
+
+    loadWorkspaceMembers()
+  }, [open, note.workspace_id, supabase])
 
   const handleShare = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!selectedMember) return
 
-    setIsLoading(true)
+    const result = await shareNote({
+      noteId: note.id,
+      userId: selectedMember,
+      permission: permission as 'view' | 'edit',
+      currentIsShared: note.is_shared,
+    })
 
-    try {
-      // First, ensure the note is marked as shared
-      if (!note.is_shared) {
-        const { error: updateError } = await supabase
-          .from('notes')
-          .update({
-            is_shared: true,
-            shared_at: new Date().toISOString(),
-          })
-          .eq('id', note.id)
-
-        if (updateError) {
-          toast.error('Error updating note sharing status')
-          return
-        }
-      }
-
-      // Then create the share record
-      const { error: shareError } = await supabase
-        .from('note_shares')
-        .insert([
-          {
-            note_id: note.id,
-            shared_with_user_id: selectedMember,
-            permission_level: permission,
-          },
-        ])
-
-      if (shareError) {
-        toast.error('Error sharing note', {
-          description: shareError.message,
-        })
-        return
-      }
-
-      toast.success('Note shared successfully!')
+    if (result.success) {
       setSelectedMember('')
       setPermission('view')
-      router.refresh()
       
       // Update current shares locally
       setCurrentShares(prev => [
         ...prev,
         { shared_with_user_id: selectedMember, permission_level: permission }
       ])
-    } catch {
-      toast.error('An unexpected error occurred')
-    } finally {
-      setIsLoading(false)
     }
   }
 
   const handleRemoveShare = async (userId: string) => {
-    try {
-      const { error } = await supabase
-        .from('note_shares')
-        .delete()
-        .eq('note_id', note.id)
-        .eq('shared_with_user_id', userId)
+    const result = await removeShare(note.id, userId)
 
-      if (error) {
-        toast.error('Error removing share')
-        return
-      }
-
-      toast.success('Share removed successfully!')
+    if (result.success) {
       setCurrentShares(prev => prev.filter(share => share.shared_with_user_id !== userId))
-      router.refresh()
-    } catch {
-      toast.error('An unexpected error occurred')
     }
   }
 

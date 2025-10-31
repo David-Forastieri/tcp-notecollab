@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -16,8 +15,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
-import { createClient } from '@/lib/supabase/client'
-import { toast } from 'sonner'
+import { useCreateNote } from '@/lib/hooks/use-notes'
 
 interface CreateNoteDialogProps {
   workspaceId: string
@@ -28,52 +26,23 @@ export function CreateNoteDialog({ workspaceId }: CreateNoteDialogProps) {
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
   const [isShared, setIsShared] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const router = useRouter()
-  const supabase = createClient()
+  const { createNote, isLoading } = useCreateNote()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setIsLoading(true)
+    
+    const result = await createNote({
+      title,
+      content,
+      workspaceId,
+      isShared,
+    })
 
-    try {
-      const { data: { user } } = await supabase.auth.getUser()
-      
-      if (!user) {
-        toast.error('You must be logged in to create a note')
-        return
-      }
-
-      const { error } = await supabase
-        .from('notes')
-        .insert([
-          {
-            title,
-            content,
-            workspace_id: workspaceId,
-            author_id: user.id,
-            is_shared: isShared,
-            shared_at: isShared ? new Date().toISOString() : null,
-          },
-        ])
-
-      if (error) {
-        toast.error('Error creating note', {
-          description: error.message,
-        })
-        return
-      }
-
-      toast.success('Note created successfully!')
+    if (result.success) {
       setOpen(false)
       setTitle('')
       setContent('')
       setIsShared(false)
-      router.refresh()
-    } catch {
-      toast.error('An unexpected error occurred')
-    } finally {
-      setIsLoading(false)
     }
   }
 

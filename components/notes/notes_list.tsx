@@ -1,15 +1,12 @@
 'use client'
 
-import { useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { EditNoteDialog } from './edit_note_dialog'
 import { ShareNoteDialog } from './share_note_dialog'
-import { createClient } from '@/lib/supabase/client'
-import { toast } from 'sonner'
-import { useRouter } from 'next/navigation'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { useDeleteNote } from '@/lib/hooks/use-notes'
 
 export interface Note {
   id: string
@@ -41,32 +38,14 @@ interface NotesListProps {
 }
 
 export function NotesList({ notes, showActions, type, currentUserId, isOwner }: NotesListProps) {
-  const router = useRouter()
-  const supabase = createClient()
+  const { deleteNote } = useDeleteNote()
 
   const handleDeleteNote = async (noteId: string) => {
     if (!confirm('Are you sure you want to delete this note?')) {
       return
     }
 
-    try {
-      const { error } = await supabase
-        .from('notes')
-        .delete()
-        .eq('id', noteId)
-
-      if (error) {
-        toast.error('Error deleting note', {
-          description: error.message,
-        })
-        return
-      }
-
-      toast.success('Note deleted successfully!')
-      router.refresh()
-    } catch {
-      toast.error('An unexpected error occurred')
-    }
+    await deleteNote(noteId)
   }
 
    const getAuthorInitials = (profile?: { full_name: string | null; email: string } | null) => {

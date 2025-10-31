@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -16,8 +15,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
-import { createClient } from '@/lib/supabase/client'
-import { toast } from 'sonner'
+import { useUpdateNote } from '@/lib/hooks/use-notes'
 
 interface Note {
   id: string
@@ -36,40 +34,22 @@ export function EditNoteDialog({ note }: EditNoteDialogProps) {
   const [title, setTitle] = useState(note.title)
   const [content, setContent] = useState(note.content)
   const [isShared, setIsShared] = useState(note.is_shared)
-  const [isLoading, setIsLoading] = useState(false)
-  const router = useRouter()
-  const supabase = createClient()
+  const { updateNote, isLoading } = useUpdateNote()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setIsLoading(true)
+    
+    const result = await updateNote({
+      noteId: note.id,
+      title,
+      content,
+      isShared,
+      previousIsShared: note.is_shared,
+      sharedAt: note.shared_at,
+    })
 
-    try {
-      const { error } = await supabase
-        .from('notes')
-        .update({
-          title,
-          content,
-          is_shared: isShared,
-          shared_at: isShared && !note.is_shared ? new Date().toISOString() : note.is_shared ? note.shared_at : null,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', note.id)
-
-      if (error) {
-        toast.error('Error updating note', {
-          description: error.message,
-        })
-        return
-      }
-
-      toast.success('Note updated successfully!')
+    if (result.success) {
       setOpen(false)
-      router.refresh()
-    } catch {
-      toast.error('An unexpected error occurred')
-    } finally {
-      setIsLoading(false)
     }
   }
 

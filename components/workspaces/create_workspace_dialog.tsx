@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -15,93 +14,23 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { createClient } from '@/lib/supabase/client'
-import { toast } from 'sonner'
+import { useCreateWorkspace } from '@/lib/hooks/use-workspaces'
 
 export function CreateWorkspaceDialog() {
   const [open, setOpen] = useState(false)
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-  const router = useRouter()
-  const supabase = createClient()
+  const { createWorkspace, isLoading } = useCreateWorkspace()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setIsLoading(true)
+    
+    const result = await createWorkspace({ name, description })
 
-    try {
-      const { data: { user } } = await supabase.auth.getUser()
-      
-      if (!user) {
-        toast.error('You must be logged in to create a workspace')
-        return
-      }
-
-      // First, ensure the user has a profile
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('id', user.id)
-        .single()
-
-      // If profile doesn't exist, create it
-      if (profileError && profileError.code === 'PGRST116') {
-        const { error: createProfileError } = await supabase
-          .from('profiles')
-          .insert([
-            {
-              id: user.id,
-              email: user.email!,
-              full_name: user.user_metadata?.full_name || user.email?.split('@')[0],
-            },
-          ])
-
-        if (createProfileError) {
-          console.error('Error creating profile:', createProfileError)
-          toast.error('Error setting up user profile')
-          return
-        }
-      } else if (profileError) {
-        console.error('Error checking profile:', profileError)
-        toast.error('Error verifying user profile')
-        return
-      }
-
-      // Now create the workspace
-      const { data: workspace, error: workspaceError } = await supabase
-        .from('workspaces')
-        .insert([
-          {
-            name,
-            description,
-            owner_id: user.id,
-          },
-        ])
-        .select()
-        .single()
-
-      if (workspaceError) {
-        console.error('Workspace creation error:', workspaceError)
-        toast.error('Error creating workspace', {
-          description: workspaceError.message,
-        })
-        return
-      }
-
-      toast.success('Workspace created successfully!')
+    if (result.success) {
       setOpen(false)
       setName('')
       setDescription('')
-      
-      // 🔥 NUEVO: Redirigir al workspace recién creado
-      router.push(`/workspaces/${workspace.id}`)
-      //router.refresh()
-    } catch (error) {
-      console.error('Unexpected error:', error)
-      toast.error('An unexpected error occurred')
-    } finally {
-      setIsLoading(false)
     }
   }
 
